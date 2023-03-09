@@ -1,0 +1,20 @@
+name: cs324
+channels:
+  - pytorch
+  - nvidia
+  - defaults
+  - conda-forge
+dependencies:
+  - pytorch
+  - pytorch-cuda=11.7
+  - torchvision
+  - cpuonly
+  - numpy
+  - scipy
+  - matplotlib
+  - jupyter
+  - tqdm
+  - scikit-learn
+  - ipykernel
+  - autopep8
+  - pip
