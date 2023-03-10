@@ -8,13 +8,13 @@ dependencies:
   - pytorch
   - pytorch-cuda=11.7
   - torchvision
-  - cpuonly
   - numpy
   - scipy
   - matplotlib
   - jupyter
+  - datasets
+  - transformers
   - tqdm
   - scikit-learn
   - ipykernel
-  - autopep8
   - pip
