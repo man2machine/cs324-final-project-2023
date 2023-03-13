@@ -7,7 +7,6 @@ channels:
 dependencies:
   - pytorch
   - pytorch-cuda=11.7
-  - torchvision
   - numpy
   - scipy
   - matplotlib
@@ -16,5 +15,7 @@ dependencies:
   - transformers
   - tqdm
   - scikit-learn
+  - transformers
+  - datasets
   - ipykernel
   - pip

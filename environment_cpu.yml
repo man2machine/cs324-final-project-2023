@@ -6,7 +6,6 @@ channels:
   - conda-forge
 dependencies:
   - pytorch
-  - torchvision
   - cpuonly
   - numpy
   - scipy
@@ -16,5 +15,7 @@ dependencies:
   - transformers
   - tqdm
   - scikit-learn
+  - transformers
+  - datasets
   - ipykernel
   - pip
