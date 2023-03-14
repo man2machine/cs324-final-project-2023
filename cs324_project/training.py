@@ -5,13 +5,16 @@ Created on Thu Mar  9 15:21:28 2023
 @author: Shahir, Hashem, Bruce
 """
 
+from functools import partial
+from typing import Union, Callable
+
 import numpy as np
 
 from datasets import Metric
 from transformers import TrainingArguments, Trainer, EvalPrediction, PreTrainedModel, PreTrainedTokenizerBase
 
 from cs324_project.datasets import GlueDatasetTask, GlueTaskDatasetInfo
-from cs324_project.utils import get_timestamp_str
+from cs324_project.utils import HF_AUTH_TOKEN, get_timestamp_str
 
 
 def get_training_args(
@@ -38,14 +41,14 @@ def get_training_args(
         weight_decay=0.01,
         load_best_model_at_end=True,
         metric_for_best_model=metric_name,
-        push_to_hub=True)
+        hub_token=HF_AUTH_TOKEN)
     
     return args
 
-def compute_metrics(
+def _compute_metrics_func(
         task: GlueDatasetTask,
         metric: Metric,
-        eval_pred: EvalPrediction):
+        eval_pred: EvalPrediction) -> Union[dict, None]:
     predictions, labels = eval_pred
     if task != GlueDatasetTask.STSB:
         predictions = np.argmax(predictions, axis=1)
@@ -53,18 +56,25 @@ def compute_metrics(
         predictions = predictions[:, 0]
     return metric.compute(predictions=predictions, references=labels)
 
+def _get_compute_metrics_func_func(
+        task: GlueDatasetTask,
+        tokenizer: PreTrainedTokenizerBase) -> Callable[[EvalPrediction], Union[dict, None]]:
+    
+    return partial(_compute_metrics_func, task, tokenizer)
+
 def get_trainer(
         dataset_info: GlueTaskDatasetInfo,
         model: PreTrainedModel,
-        tokenizer: PreTrainedTokenizerBase,
         training_args: TrainingArguments) -> Trainer:
     
+    func = _get_compute_metrics_func_func(dataset_info.task, dataset_info.tokenizer)
     trainer = Trainer(
-        model,
-        training_args,
-        train_dataset=dataset_info.train,
-        eval_dataset=dataset_info.val,
-        tokenizer=tokenizer,
-        compute_metrics=compute_metrics)
+        model=model,
+        args=training_args,
+        train_dataset=dataset_info.datasets_encoded.train,
+        eval_dataset=dataset_info.datasets_encoded.val,
+        tokenizer=dataset_info.tokenizer,
+        compute_metrics=func,
+        )
     
     return trainer

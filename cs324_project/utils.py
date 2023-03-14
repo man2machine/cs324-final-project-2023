@@ -21,6 +21,7 @@ IntArrayLike1D = Union[list[int], npt.NDArray[np.integer]]
 FloatArrayLike1D = Union[list[float], npt.NDArray[np.floating]]
 AnyArrayLike1D = Union[list[Any], npt.NDArray]
 
+HF_AUTH_TOKEN = "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"
 
 class JSONDictSerializable(metaclass=abc.ABCMeta):
     def __str__(

@@ -5,15 +5,15 @@ Created on Thu Mar  9 16:09:54 2023
 @author: Shahir, Hashem, Bruce
 """
 
-from enum import Enum
 from dataclasses import dataclass
 from functools import partial
 from typing import Any, Union, Callable
 
-from datasets import load_dataset, load_metric, Dataset, Metric
+from datasets import load_dataset, Dataset, Metric
+from evaluate import load as load_metric
 from transformers import PreTrainedTokenizerBase
 
-class GlueDatasetTask(Enum):
+class GlueDatasetTask:
     AX = 'ax'
     COLA = 'cola'
     MNLI = 'mnli'
@@ -33,10 +33,12 @@ class GlueTaskDatasets:
     val: Dataset
     test: Dataset
 
+@dataclass
 class GlueTaskDatasetInfo:
     task: GlueDatasetTask
     datasets: GlueTaskDatasets
     datasets_encoded: GlueTaskDatasets
+    tokenizer: PreTrainedTokenizerBase
     metric: Metric
     num_classes: int
 
@@ -96,8 +98,6 @@ def load_glue_dataset_info(
     dataset = load_dataset('glue', task)
     metric = load_metric('glue', task)
     
-    dataset['train'].features['label'].num_classes
-    
     if task == GlueDatasetTask.MNLI_MISMATCHED:
         val_key = 'validation_mismatched'
     elif task == GlueDatasetTask.MNLI: 
@@ -113,12 +113,13 @@ def load_glue_dataset_info(
         datasets=task_datasets,
         task=task,
         tokenizer=tokenizer)
-    num_classes = task_datasets.train.features['labels'].num_classes
+    num_classes = task_datasets.train.features['label'].num_classes
     
     dataset_info = GlueTaskDatasetInfo(
         task=task,
         datasets=task_datasets,
         datasets_encoded=task_datasets_encoded,
+        tokenizer=tokenizer,
         metric=metric,
         num_classes=num_classes)
     
