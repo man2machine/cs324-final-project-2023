@@ -11,7 +11,7 @@ from cs324_project.datasets import GlueTaskDatasetInfo
 from cs324_project.utils import HF_AUTH_TOKEN
 
 class ModelCheckpointName:
-    DISTILBERT = "distilbert-base-uncased"
+    DISTILBERT_HUGGINGFACE = "distilbert-base-uncased"
     BERT_TINY_GOOGLE = "prajjwal1/bert-tiny"
     TINYBERT_HUAWEI = "huawei-noah/TinyBERT_General_4L_312D"
 
