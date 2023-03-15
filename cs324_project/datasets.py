@@ -5,6 +5,7 @@ Created on Thu Mar  9 16:09:54 2023
 @author: Shahir, Hashem, Bruce
 """
 
+from enum import Enum
 from dataclasses import dataclass
 from functools import partial
 from typing import Any, Union, Callable
@@ -13,7 +14,7 @@ from datasets import load_dataset, Dataset, Metric
 from evaluate import load as load_metric
 from transformers import PreTrainedTokenizerBase
 
-class GlueDatasetTask:
+class GlueDatasetTask(str, Enum):
     AX = 'ax'
     COLA = 'cola'
     MNLI = 'mnli'
@@ -116,7 +117,7 @@ def load_glue_dataset_info(
     num_classes = task_datasets.train.features['label'].num_classes
     
     dataset_info = GlueTaskDatasetInfo(
-        task=task,
+        task=task.value,
         datasets=task_datasets,
         datasets_encoded=task_datasets_encoded,
         tokenizer=tokenizer,

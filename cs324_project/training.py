@@ -5,16 +5,18 @@ Created on Thu Mar  9 15:21:28 2023
 @author: Shahir, Hashem, Bruce
 """
 
+import os
 from functools import partial
 from typing import Union, Callable
+import pathlib
 
 import numpy as np
 
 from datasets import Metric
-from transformers import TrainingArguments, Trainer, EvalPrediction, PreTrainedModel, PreTrainedTokenizerBase
+from transformers import TrainingArguments, Trainer, EvalPrediction, PreTrainedModel, BertModel
 
 from cs324_project.datasets import GlueDatasetTask, GlueTaskDatasetInfo
-from cs324_project.utils import HF_AUTH_TOKEN, get_timestamp_str
+from cs324_project.utils import HF_AUTH_TOKEN, get_timestamp_str, get_rel_pkg_path
 
 
 def get_training_args(
@@ -28,7 +30,7 @@ def get_training_args(
         metric_name = 'matthews_correlation'
     else:
         metric_name = 'accuracy'
-    output_dir = "Model {}".format(get_timestamp_str())
+    output_dir = os.path.join(get_rel_pkg_path("models/"), "Model {}".format(get_timestamp_str()))
 
     args = TrainingArguments(
         output_dir,
@@ -58,23 +60,29 @@ def _compute_metrics_func(
 
 def _get_compute_metrics_func_func(
         task: GlueDatasetTask,
-        tokenizer: PreTrainedTokenizerBase) -> Callable[[EvalPrediction], Union[dict, None]]:
+        metric: Metric) -> Callable[[EvalPrediction], Union[dict, None]]:
     
-    return partial(_compute_metrics_func, task, tokenizer)
+    return partial(_compute_metrics_func, task, metric)
 
 def get_trainer(
         dataset_info: GlueTaskDatasetInfo,
         model: PreTrainedModel,
         training_args: TrainingArguments) -> Trainer:
     
-    func = _get_compute_metrics_func_func(dataset_info.task, dataset_info.tokenizer)
+    func = _get_compute_metrics_func_func(dataset_info.task, dataset_info.metric)
     trainer = Trainer(
         model=model,
         args=training_args,
         train_dataset=dataset_info.datasets_encoded.train,
         eval_dataset=dataset_info.datasets_encoded.val,
         tokenizer=dataset_info.tokenizer,
-        compute_metrics=func,
-        )
+        compute_metrics=func)
     
     return trainer
+
+def get_latest_checkpoint(
+        training_args: TrainingArguments) -> os.PathLike:
+    
+    checkpoint_dirs = sorted(pathlib.Path(training_args.output_dir).iterdir(), key=os.path.getmtime)
+    
+    return os.path.abspath(checkpoint_dirs[-1])
