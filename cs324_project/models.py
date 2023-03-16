@@ -22,10 +22,13 @@ class ModelCheckpointName(str, Enum):
     TINYBERT_HUAWEI = "huawei-noah/TinyBERT_General_4L_312D"
 
 def load_tokenizer(
-        model_checkpoint_name: ModelCheckpointName) -> PreTrainedTokenizerBase:
+        model_name_or_path: Union[ModelCheckpointName, os.PathLike]) -> PreTrainedTokenizerBase:
+    
+    if isinstance(model_name_or_path, ModelCheckpointName):
+        model_name_or_path = model_name_or_path.value
     
     tokenizer = AutoTokenizer.from_pretrained(
-        model_checkpoint_name.value,
+        model_name_or_path,
         use_fast=True,
         use_auth_token=HF_AUTH_TOKEN)
     
@@ -35,8 +38,11 @@ def load_classification_model(
         model_name_or_path: Union[ModelCheckpointName, os.PathLike],
         dataset_info: GlueTaskDatasetInfo) -> PreTrainedModel:
     
+    if isinstance(model_name_or_path, ModelCheckpointName):
+        model_name_or_path = model_name_or_path.value
+    
     model = AutoModelForSequenceClassification.from_pretrained(
-        model_name_or_path.value,
+        model_name_or_path,
         num_labels=dataset_info.num_classes,
         use_auth_token=HF_AUTH_TOKEN)
     
@@ -46,8 +52,11 @@ def load_pretraining_model(
         model_name_or_path: Union[ModelCheckpointName, os.PathLike],
         dataset_info: GlueTaskDatasetInfo) -> PreTrainedModel:
     
+    if isinstance(model_name_or_path, ModelCheckpointName):
+        model_name_or_path = model_name_or_path.value
+    
     model = AutoModelForMaskedLM.from_pretrained(
-        model_name_or_path.value,
+        model_name_or_path,
         num_labels=dataset_info.num_classes,
         use_auth_token=HF_AUTH_TOKEN)
     

@@ -96,8 +96,8 @@ def load_glue_dataset_info(
         task: GlueDatasetTask,
         tokenizer: PreTrainedTokenizerBase) -> GlueTaskDatasetInfo:
     
-    dataset = load_dataset('glue', task)
-    metric = load_metric('glue', task)
+    dataset = load_dataset("glue", task)
+    metric = load_metric("glue", task)
     
     if task == GlueDatasetTask.MNLI_MISMATCHED:
         val_key = 'validation_mismatched'

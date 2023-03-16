@@ -80,7 +80,7 @@ def get_trainer(
     
     return trainer
 
-def get_latest_checkpoint(
+def get_latest_checkpoint_path(
         training_args: TrainingArguments) -> os.PathLike:
     
     checkpoint_dirs = sorted(pathlib.Path(training_args.output_dir).iterdir(), key=os.path.getmtime)
