@@ -13,9 +13,9 @@ dependencies:
   - jupyter
   - datasets
   - transformers
+  - evaluate
   - tqdm
   - scikit-learn
-  - transformers
   - datasets
   - ipykernel
   - pip
