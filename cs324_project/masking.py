@@ -7,23 +7,26 @@ Created on Sat Mar 18 04:43:25 2023
 
 import collections
 from functools import partial
+from typing import Any
 
 import numpy as np
 
 from transformers import (
-    default_data_collator, BatchEncoding, PreTrainedTokenizerBase, DataCollatorForLanguageModeling, DataCollator)
+    default_data_collator, PreTrainedTokenizerBase, DataCollatorForLanguageModeling, DataCollator,
+    DataCollatorWithPadding, PaddingStrategy)
 
 
 def _whole_word_masking_data_collator(
         tokenizer: PreTrainedTokenizerBase,
+        base_data_collator: DataCollator,
         prob: float,
-        examples_encoded: BatchEncoding) -> DataCollator:
+        examples: list[dict[str, Any]]) -> dict[str, Any]:
     
     # Taken from https://huggingface.co/course/chapter7/3?fw=pt
-    for example in examples_encoded:
-        print(example)
-        example = example.copy()
+    masked_examples = []
+    for example in examples:
         word_ids = example.pop('word_ids')
+        example['labels'] = example['input_ids'].copy()
 
         # Create a map between words and corresponding token indices
         mapping = collections.defaultdict(list)
@@ -47,15 +50,18 @@ def _whole_word_masking_data_collator(
                 new_labels[idx] = labels[idx]
                 input_ids[idx] = tokenizer.mask_token_id
         example['labels'] = new_labels
+        masked_examples.append(example)
 
-    return default_data_collator(examples_encoded)
+    return base_data_collator(masked_examples)
 
 
 def get_random_masking_data_collator(
         tokenizer: PreTrainedTokenizerBase,
         prob: float = 0.2) -> DataCollator:
 
-    data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm_probability=prob)
+    data_collator = DataCollatorForLanguageModeling(
+        tokenizer=tokenizer,
+        mlm_probability=prob)
 
     return data_collator
 
@@ -63,7 +69,10 @@ def get_random_masking_data_collator(
 def get_whole_word_masking_data_collator(
         tokenizer: PreTrainedTokenizerBase,
         prob: float = 0.2) -> DataCollator:
-
-    data_collator = partial(_whole_word_masking_data_collator, tokenizer, prob)
+    
+    default_collator = DataCollatorWithPadding(
+        tokenizer=tokenizer,
+        padding=PaddingStrategy.LONGEST)
+    data_collator = partial(_whole_word_masking_data_collator, tokenizer, default_collator, prob)
 
     return data_collator

@@ -89,7 +89,7 @@ def _encode_glue_dataset_func(
     return result
 
 
-def _get_preproc_glue_dataset_func(
+def _get_encode_glue_dataset_func(
         task: GlueDatasetTask,
         tokenizer: PreTrainedTokenizerBase) -> Callable[[DatasetEntryType], DatasetEntryType]:
 
@@ -101,12 +101,12 @@ def encode_glue_dataset_mlm(
         task: GlueDatasetTask,
         tokenizer: PreTrainedTokenizerBase):
 
-    preproc_func = _get_preproc_glue_dataset_func(task, tokenizer)
+    encode_func = _get_encode_glue_dataset_func(task, tokenizer)
     remove_columns = list(get_glue_dataset_task_keys(task)) + ['label', 'idx']
     datasets_encoded = GlueTaskDatasets(
-        train=datasets.train.map(preproc_func, batched=True, remove_columns=remove_columns),
-        val=datasets.val.map(preproc_func, batched=True, remove_columns=remove_columns),
-        test=datasets.test.map(preproc_func, batched=True, remove_columns=remove_columns))
+        train=datasets.train.map(encode_func, batched=True, remove_columns=remove_columns),
+        val=datasets.val.map(encode_func, batched=True, remove_columns=remove_columns),
+        test=datasets.test.map(encode_func, batched=True, remove_columns=remove_columns))
 
     return datasets_encoded
 
@@ -116,11 +116,11 @@ def encode_glue_dataset_sc(
         task: GlueDatasetTask,
         tokenizer: PreTrainedTokenizerBase):
 
-    preproc_func = _get_preproc_glue_dataset_func(task, tokenizer)
+    encode_func = _get_encode_glue_dataset_func(task, tokenizer)
     datasets_encoded = GlueTaskDatasets(
-        train=datasets.train.map(preproc_func, batched=True),
-        val=datasets.val.map(preproc_func, batched=True),
-        test=datasets.test.map(preproc_func, batched=True))
+        train=datasets.train.map(encode_func, batched=True),
+        val=datasets.val.map(encode_func, batched=True),
+        test=datasets.test.map(encode_func, batched=True))
 
     return datasets_encoded
 

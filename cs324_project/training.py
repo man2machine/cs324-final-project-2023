@@ -14,8 +14,7 @@ import numpy as np
 
 from datasets import Metric
 from transformers import (
-    TrainingArguments, Trainer, EvalPrediction, PreTrainedModel, IntervalStrategy, default_data_collator,
-    DataCollator)
+    TrainingArguments, Trainer, EvalPrediction, PreTrainedModel, IntervalStrategy, DataCollator)
 
 from cs324_project.datasets import GlueDatasetTask, GlueTaskDatasetInfo
 from cs324_project.utils import HF_AUTH_TOKEN, get_timestamp_str, get_rel_pkg_path
@@ -45,6 +44,7 @@ def get_training_args(
         weight_decay=0.01,
         load_best_model_at_end=True,
         metric_for_best_model=metric_name,
+        remove_unused_columns=False,
         hub_token=HF_AUTH_TOKEN)
 
     return args
