@@ -74,6 +74,7 @@ def get_glue_dataset_task_keys(
 def _encode_glue_dataset_func(
         task: GlueDatasetTask,
         tokenizer: PreTrainedTokenizerBase,
+        add_word_ids: bool,
         examples: DatasetEntryType) -> BatchEncoding:
 
     sentence_keys = get_glue_dataset_task_keys(task)
@@ -91,9 +92,10 @@ def _encode_glue_dataset_func(
 
 def _get_encode_glue_dataset_func(
         task: GlueDatasetTask,
-        tokenizer: PreTrainedTokenizerBase) -> Callable[[DatasetEntryType], DatasetEntryType]:
+        tokenizer: PreTrainedTokenizerBase,
+        add_word_ids: bool = False) -> Callable[[DatasetEntryType], DatasetEntryType]:
 
-    return partial(_encode_glue_dataset_func, task, tokenizer)
+    return partial(_encode_glue_dataset_func, task, tokenizer, add_word_ids)
 
 
 def encode_glue_dataset_mlm(
@@ -101,7 +103,10 @@ def encode_glue_dataset_mlm(
         task: GlueDatasetTask,
         tokenizer: PreTrainedTokenizerBase):
 
-    encode_func = _get_encode_glue_dataset_func(task, tokenizer)
+    encode_func = _get_encode_glue_dataset_func(
+        task=task,
+        tokenizer=tokenizer,
+        add_word_ids=True)
     remove_columns = list(get_glue_dataset_task_keys(task)) + ['label', 'idx']
     datasets_encoded = GlueTaskDatasets(
         train=datasets.train.map(encode_func, batched=True, remove_columns=remove_columns),
@@ -116,11 +121,14 @@ def encode_glue_dataset_sc(
         task: GlueDatasetTask,
         tokenizer: PreTrainedTokenizerBase):
 
-    encode_func = _get_encode_glue_dataset_func(task, tokenizer)
+    encode_func = _get_encode_glue_dataset_func(
+        task=task,
+        tokenizer=tokenizer)
+    remove_columns = list(get_glue_dataset_task_keys(task)) + ['idx']
     datasets_encoded = GlueTaskDatasets(
-        train=datasets.train.map(encode_func, batched=True),
-        val=datasets.val.map(encode_func, batched=True),
-        test=datasets.test.map(encode_func, batched=True))
+        train=datasets.train.map(encode_func, batched=True, remove_columns=remove_columns),
+        val=datasets.val.map(encode_func, batched=True, remove_columns=remove_columns),
+        test=datasets.test.map(encode_func, batched=True, remove_columns=remove_columns))
 
     return datasets_encoded
 
@@ -130,8 +138,8 @@ def load_glue_dataset_info(
         tokenizer: PreTrainedTokenizerBase,
         reduce_fraction: Optional[float] = None) -> GlueTaskDatasetInfo:
 
-    dataset = load_dataset("glue", task)
-    metric = load_metric("glue", task)
+    dataset = load_dataset("glue", task.value)
+    metric = load_metric("glue", task.value)
 
     if task == GlueDatasetTask.MNLI_MISMATCHED:
         val_key = 'validation_mismatched'

@@ -9,17 +9,9 @@ import os
 import abc
 import datetime
 import json
-from typing import Union, Any
-
-import numpy as np
-import numpy.typing as npt
+from typing import Any
 
 import cs324_project
-
-BoolArrayLike1D = Union[list[bool], npt.NDArray[np.bool_]]
-IntArrayLike1D = Union[list[int], npt.NDArray[np.integer]]
-FloatArrayLike1D = Union[list[float], npt.NDArray[np.floating]]
-AnyArrayLike1D = Union[list[Any], npt.NDArray]
 
 HF_AUTH_TOKEN = "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"
 

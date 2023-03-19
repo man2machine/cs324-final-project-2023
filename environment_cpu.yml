@@ -16,7 +16,4 @@ dependencies:
   - evaluate
   - tqdm
   - scikit-learn
-  - datasets
   - ipykernel
-  - pip
-

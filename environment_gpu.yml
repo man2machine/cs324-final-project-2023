@@ -2,11 +2,12 @@ name: cs324
 channels:
   - pytorch
   - nvidia
+  - huggingface
   - defaults
   - conda-forge
 dependencies:
   - pytorch
-  - pytorch-cuda=11.7
+  - pytorch-cuda=11.8
   - numpy
   - scipy
   - matplotlib
@@ -16,6 +17,4 @@ dependencies:
   - evaluate
   - tqdm
   - scikit-learn
-  - datasets
   - ipykernel
-  - pip

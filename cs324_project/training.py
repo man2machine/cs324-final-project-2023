@@ -6,108 +6,83 @@ Created on Thu Mar  9 15:21:28 2023
 """
 
 import os
-from functools import partial
-from typing import Union, Callable, Optional
 import pathlib
 
-import numpy as np
+import torch
+import torch.nn as nn
+import torch.optim as optim
 
-from datasets import Metric
-from transformers import (
-    TrainingArguments, Trainer, EvalPrediction, PreTrainedModel, IntervalStrategy, DataCollator)
+from transformers import TrainingArguments
 
-from cs324_project.datasets import GlueDatasetTask, GlueTaskDatasetInfo
-from cs324_project.utils import HF_AUTH_TOKEN, get_timestamp_str, get_rel_pkg_path
-
-
-def get_training_args(
-        task: GlueDatasetTask,
-        batch_size: int = 16,
-        num_epochs: int = 1) -> TrainingArguments:
-
-    if task == GlueDatasetTask.STSB:
-        metric_name = 'pearson'
-    elif task == GlueDatasetTask.COLA:
-        metric_name = 'matthews_correlation'
-    else:
-        metric_name = 'accuracy'
-    output_dir = os.path.join(get_rel_pkg_path("models/"), "Model {}".format(get_timestamp_str()))
-
-    args = TrainingArguments(
-        output_dir,
-        evaluation_strategy=IntervalStrategy.EPOCH,
-        save_strategy=IntervalStrategy.EPOCH,
-        learning_rate=2e-5,
-        per_device_train_batch_size=batch_size,
-        per_device_eval_batch_size=batch_size,
-        num_train_epochs=num_epochs,
-        weight_decay=0.01,
-        load_best_model_at_end=True,
-        metric_for_best_model=metric_name,
-        remove_unused_columns=False,
-        hub_token=HF_AUTH_TOKEN)
-
-    return args
-
-
-def _compute_metrics_func(
-        task: GlueDatasetTask,
-        metric: Metric,
-        eval_pred: EvalPrediction) -> Union[dict, None]:
-    preds, labels = eval_pred
-    if task != GlueDatasetTask.STSB:
-        preds = np.argmax(preds, axis=1)
-    else:
-        preds = preds[:, 0]
-    return metric.compute(predictions=preds, references=labels)
-
-
-def _get_compute_metrics_sc_func(
-        task: GlueDatasetTask,
-        metric: Metric) -> Callable[[EvalPrediction], Union[dict, None]]:
-
-    return partial(_compute_metrics_func, task, metric)
-
-
-def get_trainer_mlm(
-        dataset_info: GlueTaskDatasetInfo,
-        model: PreTrainedModel,
-        training_args: TrainingArguments,
-        data_collator: Optional[DataCollator] = None) -> Trainer:
-
-    trainer = Trainer(
-        model=model,
-        args=training_args,
-        train_dataset=dataset_info.datasets_encoded_mlm.train,
-        eval_dataset=dataset_info.datasets_encoded_mlm.val,
-        tokenizer=dataset_info.tokenizer,
-        data_collator=data_collator)
-
-    return trainer
-
-
-def get_trainer_sc(
-        dataset_info: GlueTaskDatasetInfo,
-        model: PreTrainedModel,
-        training_args: TrainingArguments,
-        data_collator: Optional[DataCollator] = None) -> Trainer:
-
-    func = _get_compute_metrics_sc_func(dataset_info.task, dataset_info.metric)
-    trainer = Trainer(
-        model=model,
-        args=training_args,
-        train_dataset=dataset_info.datasets_encoded_sc.train,
-        eval_dataset=dataset_info.datasets_encoded_sc.val,
-        tokenizer=dataset_info.tokenizer,
-        data_collator=data_collator,
-        compute_metrics=func)
-
-    return trainer
+from cs324_project.classification import get_training_args_sc, get_trainer_sc
+from cs324_project.masking import get_training_args_mlm, get_trainer_mlm
 
 
 def get_latest_checkpoint_path(
         training_args: TrainingArguments) -> os.PathLike:
 
-    checkpoint_dirs = sorted(pathlib.Path(training_args.output_dir).iterdir(), key=os.path.getmtime)
+    checkpoint_dirs = sorted(pathlib.Path(
+        training_args.output_dir).iterdir(), key=os.path.getmtime)
 
     return os.path.abspath(checkpoint_dirs[-1])
+
+
+def make_optimizer(
+        params_to_update: list[torch.Tensor],
+        lr: float = 1e-4,
+        weight_decay: float = 1e-9,
+        clip_grad_norm: bool = False) -> optim.Optimizer:
+
+    optimizer = optim.AdamW(
+        params_to_update,
+        lr=lr,
+        betas=(0.9, 0.999),
+        eps=1e-08,
+        weight_decay=weight_decay,
+        amsgrad=True)
+
+    if clip_grad_norm:
+        nn.utils.clip_grad_norm_(params_to_update, 3.0)
+
+    return optimizer
+
+
+def get_lr(
+        optimizer: optim.Optimizer) -> None:
+
+    for param_group in optimizer.param_groups:
+        return param_group['lr']
+
+
+def set_optimizer_lr(
+        optimizer: optim.Optimizer,
+        lr: float) -> None:
+
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = lr
+
+
+def make_scheduler(
+        optimizer: optim.Optimizer) -> optim.lr_scheduler.ReduceLROnPlateau:
+
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer, factor=0.5, threshold=0.025, patience=10, cooldown=5, min_lr=1e-6, verbose=True)
+
+    return scheduler
+
+
+def shrink_and_preturb(
+        base_net: nn.Module,
+        new_net: nn.Module,
+        shrink: float = 0.5,
+        perturb: float = 0.1) -> nn.Module:
+
+    params1 = base_net.parameters()
+    params2 = new_net.parameters()
+    with torch.set_grad_enabled(False):
+        for p1, p2 in zip(params1, params2):
+            p1.mul_(shrink).add_(p2, alpha=perturb)
+
+    return base_net
+
+
