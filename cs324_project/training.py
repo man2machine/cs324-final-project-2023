@@ -12,17 +12,11 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from transformers import TrainingArguments
-
-from cs324_project.classification import get_training_args_sc, get_trainer_sc
-from cs324_project.masking import get_training_args_mlm, get_trainer_mlm
-
 
 def get_latest_checkpoint_path(
-        training_args: TrainingArguments) -> os.PathLike:
+        output_dir: os.PathLike) -> os.PathLike:
 
-    checkpoint_dirs = sorted(pathlib.Path(
-        training_args.output_dir).iterdir(), key=os.path.getmtime)
+    checkpoint_dirs = sorted(pathlib.Path(output_dir).iterdir(), key=os.path.getmtime)
 
     return os.path.abspath(checkpoint_dirs[-1])
 
@@ -84,5 +78,3 @@ def shrink_and_preturb(
             p1.mul_(shrink).add_(p2, alpha=perturb)
 
     return base_net
-
-

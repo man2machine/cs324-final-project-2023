@@ -30,14 +30,14 @@ class GlueDatasetTask(str, Enum):
     WNLI = 'wnli'
 
 
-@dataclass
+@dataclass(frozen=True)
 class GlueTaskDatasets:
     train: Dataset
     val: Dataset
     test: Dataset
 
 
-@dataclass
+@dataclass(frozen=True)
 class GlueTaskDatasetInfo:
     task: GlueDatasetTask
     datasets: GlueTaskDatasets
@@ -84,7 +84,8 @@ def _encode_glue_dataset_func(
     else:
         sentence1_key, sentence2_key = sentence_keys
         result = tokenizer(examples[sentence1_key], examples[sentence2_key], truncation=True)
-    if result.is_fast:
+
+    if add_word_ids and result.is_fast:
         result['word_ids'] = [result.word_ids(i) for i in range(len(result['input_ids']))]
 
     return result
@@ -147,12 +148,12 @@ def load_glue_dataset_info(
         val_key = 'validation_matched'
     else:
         val_key = 'validation'
-    
+
     if reduce_fraction:
         dataset['train'] = dataset['train'].train_test_split(int(len(dataset['train']) * reduce_fraction))['test']
         dataset[val_key] = dataset[val_key].train_test_split(int(len(dataset[val_key]) * reduce_fraction))['test']
         dataset['test'] = dataset['test'].train_test_split(int(len(dataset['test']) * reduce_fraction))['test']
-        
+
     task_datasets = GlueTaskDatasets(
         train=dataset['train'],
         val=dataset[val_key],
