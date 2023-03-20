@@ -39,12 +39,23 @@ def _get_compute_metrics_sc_func(
     return partial(_compute_metrics_sc_func, task, metric)
 
 
+def _sc_data_collator(
+        base_data_collator: DataCollator,
+        examples: list[dict[str, Any]]) -> dict[str, Any]:
+
+    examples = [{k: v for k, v in example.items() if k not in ['word_ids']}
+                for example in examples]
+
+    return base_data_collator(examples)
+
+
 def get_sc_data_collator(
         tokenizer: PreTrainedTokenizerBase) -> DataCollator:
 
-    data_collator = DataCollatorWithPadding(
+    base_data_collator = DataCollatorWithPadding(
         tokenizer=tokenizer,
         padding=PaddingStrategy.LONGEST)
+    data_collator = partial(_sc_data_collator, base_data_collator)
 
     return data_collator
 
