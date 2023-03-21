@@ -1,7 +1,10 @@
 old/
 extra/
-models/
 resources/
+
+models/*/*/*/*
+
+!models/*/*/*/trainer_state.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

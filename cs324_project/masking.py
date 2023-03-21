@@ -298,11 +298,9 @@ class TyphoonMaskedLanguageModelTrainer(Trainer):
 
         input_id_counts = self._get_count_dist(input_ids[input_id_valid_mask].cpu().numpy())
         input_id_counts_mask = (input_id_counts != 0)
-
         label_counts = self._get_count_dist(labels[label_valid_mask].cpu().numpy())
         label_counts_mask = (label_counts != 0)
-
-        combined_mask = np.logical_or(input_id_counts_mask, label_counts_mask)
+        combined_counts_mask = np.logical_or(input_id_counts_mask, label_counts_mask)
 
         new_weights1 = np.zeros(self.vocab_size, dtype=np.float32)
         new_weights2 = np.zeros(self.vocab_size, dtype=np.float32)
@@ -321,7 +319,7 @@ class TyphoonMaskedLanguageModelTrainer(Trainer):
         np.add.at(
             new_weights1,
             input_ids[input_id_valid_mask].cpu().numpy(),
-            inputs_grad[input_id_valid_mask].cpu().numpy())
+            -inputs_grad[input_id_valid_mask].cpu().numpy())
         new_weights1[input_id_counts_mask] /= input_id_counts[input_id_counts_mask]
 
         np.add.at(
@@ -333,10 +331,10 @@ class TyphoonMaskedLanguageModelTrainer(Trainer):
         new_weights = new_weights1 + new_weights2
 
         if self.first_step_done:
-            self.token_id_to_weight[combined_mask] *= (1 - self.ema_weight)
-            self.token_id_to_weight[combined_mask] += new_weights[combined_mask] * self.ema_weight
+            self.token_id_to_weight[combined_counts_mask] *= (1 - self.ema_weight)
+            self.token_id_to_weight[combined_counts_mask] += new_weights[combined_counts_mask] * self.ema_weight
         else:
-            self.token_id_to_weight[combined_mask] += new_weights[combined_mask]
+            self.token_id_to_weight[combined_counts_mask] += new_weights[combined_counts_mask]
             self.first_step_done = True
 
         return loss.detach()
