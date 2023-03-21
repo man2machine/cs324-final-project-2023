@@ -12,11 +12,14 @@ from typing import Union, Callable, Any
 import numpy as np
 
 from datasets import Metric
-from transformers import PreTrainedTokenizerBase, DataCollatorWithPadding, DataCollator, EvalPrediction
+from transformers import (
+    PreTrainedTokenizerBase, DataCollatorWithPadding, DataCollator, EvalPrediction, TrainingArguments, Trainer,
+    PreTrainedModel, IntervalStrategy, DataCollator)
 from transformers.utils import PaddingStrategy
-from transformers import TrainingArguments, Trainer, PreTrainedModel, IntervalStrategy, DataCollator
+from transformers.training_args import OptimizerNames
 
 from cs324_project.datasets import GlueDatasetTask, GlueTaskDatasetInfo
+from cs324_project.training import DataSaverTrainerCallback
 from cs324_project.utils import HF_AUTH_TOKEN, get_timestamp_str, get_rel_pkg_path
 
 
@@ -63,6 +66,8 @@ def get_sc_data_collator(
 def get_training_args_sc(
         task: GlueDatasetTask,
         batch_size: int = 16,
+        learning_rate: float = 1e-6,
+        weight_decay: float = 1e-2,
         num_epochs: int = 1,
         verbose: bool = True) -> TrainingArguments:
 
@@ -81,15 +86,17 @@ def get_training_args_sc(
     args = TrainingArguments(
         output_dir,
         evaluation_strategy=IntervalStrategy.EPOCH,
+        logging_strategy=IntervalStrategy.EPOCH,
         save_strategy=IntervalStrategy.EPOCH,
-        learning_rate=2e-5,
+        learning_rate=learning_rate,
         per_device_train_batch_size=batch_size,
         per_device_eval_batch_size=batch_size,
         num_train_epochs=num_epochs,
-        weight_decay=0.01,
+        weight_decay=weight_decay,
         load_best_model_at_end=True,
         metric_for_best_model=metric_name,
         remove_unused_columns=False,
+        optim=OptimizerNames.ADAMW_TORCH,
         hub_token=HF_AUTH_TOKEN)
 
     return args
@@ -109,6 +116,7 @@ def get_trainer_sc(
         eval_dataset=dataset_info.datasets_encoded_sc.val,
         tokenizer=dataset_info.tokenizer,
         data_collator=data_collator,
-        compute_metrics=func)
+        compute_metrics=func,
+        callbacks=[DataSaverTrainerCallback()])
 
     return trainer

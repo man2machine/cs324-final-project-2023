@@ -166,7 +166,10 @@ def load_glue_dataset_info(
         datasets=task_datasets,
         task=task,
         tokenizer=tokenizer)
-    num_classes = task_datasets.train.features['label'].num_classes
+    if task == GlueDatasetTask.STSB:
+        num_classes = 1
+    else:
+        num_classes = task_datasets.train.features['label'].num_classes
 
     dataset_info = GlueTaskDatasetInfo(
         task=task.value,
