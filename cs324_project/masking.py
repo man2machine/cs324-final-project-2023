@@ -2,7 +2,7 @@
 """
 Created on Sat Mar 18 04:43:25 2023
 
-@author: Shahir
+@author: Shahir, Hashem, Bruce
 """
 
 import os
@@ -221,7 +221,8 @@ class TyphoonMaskedLanguageModelTrainer(Trainer):
             train_dataset=self.dataset_info.datasets_encoded_mlm.train,
             eval_dataset=self.dataset_info.datasets_encoded_mlm.val,
             tokenizer=self.tokenizer,
-            data_collator=self._data_collator
+            data_collator=self._data_collator,
+            callbacks=[DataSaverTrainerCallback()]
         )
 
     def _get_count_dist(

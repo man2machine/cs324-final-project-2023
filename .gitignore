@@ -1,10 +1,11 @@
 old/
 extra/
 resources/
+models/
 
-models/*/*/*/*
+models_save/*/*/*/*/*
+!models_save/*/*/*/*/trainer_state.json
 
-!models/*/*/*/trainer_state.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
