@@ -161,11 +161,11 @@ def plot_task_results(
         task: GlueDatasetTask,
         results: dict[TrainingPhase, dict[MethodType, TrainerStateParsed]],
         save: bool = False):
-    
+
     if save:
         save_dir = os.path.join("plots/", task.value)
         os.makedirs(save_dir, exist_ok=True)
-    
+
     task_label = task.value.upper()
     for training_phase in TrainingPhase:
         data = results[training_phase]
@@ -186,10 +186,10 @@ def plot_task_results(
             ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.2))
             if not __IPYTHON__:
                 fig.show()
-            
+
             if save:
                 fname = f"{task.value}_{training_phase.value.key}_{metric.value.key}.png"
-                fig.savefig(os.path.join(save_dir, fname), bbox_inches='tight')        
+                fig.savefig(os.path.join(save_dir, fname), bbox_inches='tight')
 
         eval_metric_names = get_eval_metric_names(task, training_phase)
 
@@ -201,7 +201,7 @@ def plot_task_results(
         df = pd.DataFrame(rows, metric_labels, method_labels)
         print(f"{training_phase.value.label} {task_label} Best Metrics for each Method")
         table_display(df)
-        
+
         if save:
             fname = f"{task.value}_{training_phase.value.key}_best.csv"
-            df.to_csv(os.path.join(save_dir, fname))    
+            df.to_csv(os.path.join(save_dir, fname))
