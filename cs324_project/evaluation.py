@@ -188,7 +188,7 @@ def plot_task_results(
                 fig.show()
             
             if save:
-                fname = f"{training_phase.value.key}_{metric.value.key}.png"
+                fname = f"{task.value}_{training_phase.value.key}_{metric.value.key}.png"
                 fig.savefig(os.path.join(save_dir, fname), bbox_inches='tight')        
 
         eval_metric_names = get_eval_metric_names(task, training_phase)
@@ -203,5 +203,5 @@ def plot_task_results(
         table_display(df)
         
         if save:
-            fname = f"{training_phase.value.key}_best.csv"
+            fname = f"{task.value}_{training_phase.value.key}_best.csv"
             df.to_csv(os.path.join(save_dir, fname))    
