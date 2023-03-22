@@ -381,8 +381,7 @@ def get_training_args_mlm(
         num_epochs: int = 1,
         verbose: bool = True) -> MaskedLanguageModelTrainingArgs:
 
-    output_dir = os.path.join(get_rel_pkg_path(
-        "models/mlm/"), "Model {}".format(get_timestamp_str()))
+    output_dir = os.path.join(get_rel_pkg_path("models/mlm/"), "Model {}".format(get_timestamp_str()))
     if verbose:
         print("Creating training arguments, model output dir:", output_dir)
 

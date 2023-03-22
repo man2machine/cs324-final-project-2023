@@ -16,6 +16,7 @@ dependencies:
   - transformers
   - evaluate
   - accelerate
+  - tensorboard
   - tqdm
   - scikit-learn
   - ipykernel

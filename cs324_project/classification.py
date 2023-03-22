@@ -66,7 +66,7 @@ def get_sc_data_collator(
 def get_training_args_sc(
         task: GlueDatasetTask,
         batch_size: int = 16,
-        learning_rate: float = 1e-6,
+        learning_rate: float = 1e-5,
         weight_decay: float = 1e-2,
         num_epochs: int = 1,
         verbose: bool = True) -> TrainingArguments:
@@ -77,8 +77,7 @@ def get_training_args_sc(
         metric_name = 'matthews_correlation'
     else:
         metric_name = 'accuracy'
-    output_dir = os.path.join(get_rel_pkg_path(
-        "models/sc/"), "Model {}".format(get_timestamp_str()))
+    output_dir = os.path.join(get_rel_pkg_path("models/sc/"), "Model {}".format(get_timestamp_str()))
     if verbose:
         print("Creating training arguments, model output dir:", output_dir)
     os.makedirs(output_dir, exist_ok=True)
